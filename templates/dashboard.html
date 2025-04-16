@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block title %}Tableau de bord - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="mb-4">Tableau de bord</h1>
+    
+    <div class="row">
+        <!-- Budget Status Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">État du budget ({{ current_month }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_budget %}
+                        {% set total_allocated = current_budget.get('total_allocated', 0)|float %}
+                        {% set total_spent = current_budget.get('total_spent', 0)|float %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Budget total:</span>
+                            <span><strong>{{ total_allocated|round(2) }} €</strong></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Dépenses actuelles:</span>
+                            <span><strong>{{ total_spent|round(2) }} €</strong></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Reste à dépenser:</span>
+                            <span><strong>{{ (total_allocated - total_spent)|round(2) }} €</strong></span>
+                        </div>
+                        <div class="progress mt-3">
+                            {% set percent = (total_spent / total_allocated * 100)|float if total_allocated > 0 else 100 %}
+                            {% set percent_display = percent if percent <= 100 else 100 %}
+                            {% set progress_class = 'bg-success' if percent < 75 else ('bg-warning' if percent < 100 else 'bg-danger') %}
+                            <div class="progress-bar {{ progress_class }}" role="progressbar" style="width: {{ percent_display }}%" 
+                                aria-valuenow="{{ percent|round }}" aria-valuemin="0" aria-valuemax="100">{{ percent|round }}%</div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Aucun budget défini pour le mois en cours.
+                            <a href="{{ url_for('budget.create_budget') }}" class="btn btn-sm btn-primary mt-2">Créer un budget</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Spending Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Dépenses mensuelles</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Category Summary Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Répartition par catégorie ({{ current_month }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if category_summary %}
+                        <canvas id="categoryChart"></canvas>
+                    {% else %}
+                        <div class="alert alert-info">Aucune dépense enregistrée pour ce mois.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Dépenses récentes</h5>
+                    <a href="{{ url_for('expense.list_expenses') }}" class="btn btn-sm btn-light">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_expenses %}
+                        <div class="list-group list-group-flush">
+                            {% for expense in recent_expenses %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ expense.title }}</h6>
+                                        <strong>{{ expense.amount|default(0)|round(2) }} €</strong>
+                                    </div>
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <small class="text-muted">
+                                            {% if expense.category_name %}
+                                                <span class="badge bg-secondary">{{ expense.category_name }}</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">Non catégorisé</span>
+                                            {% endif %}
+                                        </small>
+                                        <small class="text-muted">{{ expense.date }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info m-3">Aucune dépense récente.</div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('expense.add_expense') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Ajouter une dépense
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    {% if monthly_totals %}
+        window.monthlyData = {
+            labels: [{% for total in monthly_totals %}'{{ total.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            data: [{% for total in monthly_totals %}{{ total.total_amount|default(0)|round(2) }}{% if not loop.last %}, {% endif %}{% endfor %}]
+        };
+    {% endif %}
+
+    {% if category_summary %}
+        window.categoryData = {
+            labels: [{% for cat in category_summary %}'{{ cat.category_name|default("Non catégorisé") }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            data: [{% for cat in category_summary %}{{ cat.total_amount|default(0)|round(2) }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)',
+                'rgba(199, 199, 199, 0.6)',
+                'rgba(83, 102, 255, 0.6)',
+                'rgba(40, 159, 64, 0.6)',
+                'rgba(210, 199, 199, 0.6)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(199, 199, 199, 1)',
+                'rgba(83, 102, 255, 1)',
+                'rgba(40, 159, 64, 1)',
+                'rgba(210, 199, 199, 1)'
+            ]
+        };
+    {% endif %}
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

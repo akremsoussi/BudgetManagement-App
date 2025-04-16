@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ 'Modifier' if expense else 'Ajouter' }} une dépense - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">{{ 'Modifier' if expense else 'Ajouter' }} une dépense</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('expense.edit_expense', expense_id=expense.id) if expense else url_for('expense.add_expense') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ expense.title if expense else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Montant (€)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" value="{{ expense.amount if expense else '' }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ expense.date if expense else default_date }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Catégorie</label>
+                            <select class="form-select" id="category_id" name="category_id">
+                                <option value="">Non catégorisé</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if expense and expense.category_id == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('expense.list_expenses') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas {{ 'fa-save' if expense else 'fa-plus' }}"></i>
+                                {{ 'Enregistrer les modifications' if expense else 'Ajouter la dépense' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

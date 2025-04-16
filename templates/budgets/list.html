@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block title %}Liste des Budgets - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mes Budgets</h1>
+        <a href="{{ url_for('budget.create_budget') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouveau budget
+        </a>
+    </div>
+    
+    {% if budgets %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Liste des budgets</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Période</th>
+                                <th>Budget total</th>
+                                <th>Dépenses actuelles</th>
+                                <th>Restant</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for budget in budgets %}
+                                {% set total_spent = budget.total_spent|default(0) %}
+                                {% set total_allocated = budget.total_allocated|default(0) %}
+                                {% set remaining = total_allocated - total_spent %}
+                                {% set percent = (total_spent / total_allocated * 100) if total_allocated > 0 else 100 %}
+                                
+                                <tr>
+                                    <td>{{ budget.month }}</td>
+                                    <td>{{ total_allocated|round(2) }} €</td>
+                                    <td>{{ total_spent|round(2) }} €</td>
+                                    <td>
+                                        {% if remaining < 0 %}
+                                            <span class="text-danger">{{ remaining|round(2) }} €</span>
+                                        {% else %}
+                                            <span class="text-success">{{ remaining|round(2) }} €</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('budget.edit_budget', month=budget.month) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Éditer
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ loop.index }}">
+                                                <i class="fas fa-trash"></i> Supprimer
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Delete Confirmation Modal -->
+                                        <div class="modal fade" id="deleteModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Êtes-vous sûr de vouloir supprimer le budget pour {{ budget.month }}?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                        <form action="{{ url_for('budget.delete_budget', month=budget.month) }}" method="POST" class="d-inline">
+                                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p>Vous n'avez pas encore créé de budget.</p>
+            <a href="{{ url_for('budget.create_budget') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus"></i> Créer mon premier budget
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

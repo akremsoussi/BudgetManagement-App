@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+
+{% block title %}Mes dépenses - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Mes dépenses</h1>
+        <a href="{{ url_for('expense.add_expense') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouvelle dépense
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Filtres</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{{ url_for('expense.list_expenses') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">Du</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">Au</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="category_id" class="form-label">Catégorie</label>
+                    <select class="form-select" id="category_id" name="category_id">
+                        <option value="">Toutes les catégories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Résultats</h5>
+            <span>Total: <strong>{{ total_amount|round(2) }} €</strong></span>
+        </div>
+        <div class="card-body p-0">
+            {% if expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Titre</th>
+                                <th>Catégorie</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                                <tr>
+                                    <td>{{ expense.date }}</td>
+                                    <td>{{ expense.title }}</td>
+                                    <td>
+                                        {% if expense.category_name %}
+                                            <span class="badge bg-secondary">{{ expense.category_name }}</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">Non catégorisé</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">{{ expense.amount|round(2) }} €</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('expense.edit_expense', expense_id=expense.id) }}" class="btn btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ expense.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Delete Modal -->
+                                        <div class="modal fade" id="deleteModal{{ expense.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ expense.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteModalLabel{{ expense.id }}">Confirmation de suppression</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Êtes-vous sûr de vouloir supprimer la dépense "{{ expense.title }}" du {{ expense.date }} d'un montant de {{ expense.amount|round(2) }} € ?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                        <form action="{{ url_for('expense.delete_expense', expense_id=expense.id) }}" method="post">
+                                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info m-3">Aucune dépense trouvée.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

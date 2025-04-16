@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block title %}Erreur serveur - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-muted">500</h1>
+    <p class="lead">Erreur interne du serveur</p>
+    <p>Une erreur inattendue s'est produite. Veuillez réessayer plus tard.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-home"></i> Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

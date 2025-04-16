@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block title %}Page non trouvée - BudgetManager{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-1 text-muted">404</h1>
+    <p class="lead">Page non trouvée</p>
+    <p>La page que vous recherchez n'existe pas ou a été déplacée.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-home"></i> Retour à l'accueil
+    </a>
+</div>
+{% endblock %}
+
