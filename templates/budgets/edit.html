@@ -32,7 +32,7 @@
                                     {% set remaining = 0 %}
                                     
                                     {% if budget %}
-                                        {% for item in budget.items %}
+                                        {% for item in budget['items'] %}
                                             {% if item.category_id == category.id %}
                                                 {% set allocated_amount = item.allocated_amount %}
                                                 {% set actual_amount = item.actual_amount %}
